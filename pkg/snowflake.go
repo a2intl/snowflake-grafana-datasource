@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"strconv"
@@ -47,7 +48,32 @@ type SnowflakeDatasource struct {
 	// The instance manager can help with lifecycle management
 	// of datasource instances in plugins. It's not a requirements
 	// but a best practice that we recommend that you follow.
-	im instancemgmt.InstanceManager
+	im                   instancemgmt.InstanceManager
+	db                   *sql.DB
+	lastConnectionString string
+}
+
+// OpenDb opens the db if it hasn't already, the connectionString has changed, or forceReopen is true
+// If error is returned nil, td.db is guaranteed to be an open database object
+func (td *SnowflakeDatasource) OpenDb(connectionString string, forceReopen bool) error {
+
+	if td.db != nil && (connectionString != td.lastConnectionString || forceReopen) {
+		td.db.Close()
+		td.db = nil
+	}
+
+	var err error
+	if td.db == nil {
+		var db *sql.DB
+		db, err = sql.Open("snowflake", connectionString)
+		if err == nil {
+			td.db = db
+			td.lastConnectionString = connectionString
+		}
+		return err
+	}
+
+	return err
 }
 
 // QueryData handles multiple queries and returns multiple responses.

@@ -60,8 +60,8 @@ func TestGetConnectionString(t *testing.T) {
 	})
 
 	t.Run("with User/pass special char", func(t *testing.T) {
-		connectionString := getConnectionString(&config, "p@sswor/d", "")
-		require.Equal(t, "username:p%40sswor%2Fd@account?database=database&role=role&schema=schema&warehouse=warehouse&conf=xxx", connectionString)
+		connectionString := getConnectionString(&config, "p@ss+wor/d", "")
+		require.Equal(t, "username:p%40ss%2Bwor%2Fd@account?database=database&role=role&schema=schema&warehouse=warehouse&conf=xxx", connectionString)
 	})
 
 	config = pluginConfig{
@@ -76,7 +76,7 @@ func TestGetConnectionString(t *testing.T) {
 
 	t.Run("with string to escape", func(t *testing.T) {
 		connectionString := getConnectionString(&config, "pa$$s&", "")
-		require.Equal(t, "user%40name:pa$$s&@acc@ount?database=dat%40base&role=ro%40le&schema=sch%40ema&warehouse=ware%40house&conf=xxx", connectionString)
+		require.Equal(t, "user%40name:pa%24%24s%26@acc@ount?database=dat%40base&role=ro%40le&schema=sch%40ema&warehouse=ware%40house&conf=xxx", connectionString)
 	})
 }
 

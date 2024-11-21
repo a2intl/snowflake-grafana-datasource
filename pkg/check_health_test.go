@@ -27,7 +27,7 @@ func TestCheckHealthWithValidConnection(t *testing.T) {
 	}
 	ctx := context.Background()
 	td := &SnowflakeDatasource{db: db}
-	result, err := td.CheckHealth(ctx, req)
+	result, err := td.CheckHealthWithDb(ctx, req)
 	require.NoError(t, err)
 	require.Equal(t, backend.HealthStatusOk, result.Status)
 	require.Equal(t, "Data source is working", result.Message)
@@ -49,7 +49,7 @@ func TestCheckHealthWithInvalidConnection(t *testing.T) {
 		},
 	}
 	ctx := context.Background()
-	td := &SnowflakeDatasource{db: db}
+	td := &SnowflakeDatasource{}
 	result, err := td.CheckHealth(ctx, req)
 	require.NoError(t, err)
 	require.Equal(t, backend.HealthStatusError, result.Status)

@@ -57,18 +57,17 @@ type queryModel struct {
 	FillMode    string   `json:"fillMode"`
 }
 
-func (qc *queryConfigStruct) fetchData(ctx context.Context, config *pluginConfig, password string, privateKey string) (result DataQueryResult, err error) {
+func (qc *queryConfigStruct) fetchData(ctx context.Context, td *SnowflakeDatasource, config *pluginConfig, password string, privateKey string) (result DataQueryResult, err error) {
 	connectionString := getConnectionString(config, password, privateKey)
 
-	db, err := sql.Open("snowflake", connectionString)
+	err = td.OpenDb(connectionString, false)
 	if err != nil {
 		log.DefaultLogger.Error("Could not open database", "err", err)
 		return result, err
 	}
-	defer db.Close()
 
 	log.DefaultLogger.Info("Query", "finalQuery", qc.FinalQuery)
-	rows, err := db.QueryContext(ctx, qc.FinalQuery)
+	rows, err := td.db.QueryContext(ctx, qc.FinalQuery)
 	if err != nil {
 		if strings.Contains(err.Error(), "000605") {
 			log.DefaultLogger.Info("Query got cancelled", "query", qc.FinalQuery, "err", err)
@@ -219,7 +218,7 @@ func (td *SnowflakeDatasource) query(ctx context.Context, dataQuery backend.Data
 	queryConfig.FinalQuery = strings.TrimSuffix(strings.TrimSpace(queryConfig.FinalQuery), ";")
 
 	frame := data.NewFrame("")
-	dataResponse, err := queryConfig.fetchData(ctx, &config, password, privateKey)
+	dataResponse, err := queryConfig.fetchData(ctx, td, &config, password, privateKey)
 	if err != nil {
 		response.Error = err
 		return response
