@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"strconv"
@@ -26,6 +25,18 @@ func newDatasource() datasource.ServeOpts {
 		im: im,
 	}
 
+	if log.DefaultLogger.Level() == log.Trace {
+		sf.GetLogger().SetLogLevel("trace")
+	} else if log.DefaultLogger.Level() == log.Debug {
+		sf.GetLogger().SetLogLevel("debug")
+	} else if log.DefaultLogger.Level() == log.Info {
+		sf.GetLogger().SetLogLevel("info")
+	} else if log.DefaultLogger.Level() == log.Warn {
+		sf.GetLogger().SetLogLevel("warn")
+	} else if log.DefaultLogger.Level() == log.Error {
+		sf.GetLogger().SetLogLevel("error")
+	}
+
 	return datasource.ServeOpts{
 		QueryDataHandler:   ds,
 		CheckHealthHandler: ds,
@@ -37,7 +48,6 @@ type SnowflakeDatasource struct {
 	// of datasource instances in plugins. It's not a requirements
 	// but a best practice that we recommend that you follow.
 	im instancemgmt.InstanceManager
-	db *sql.DB
 }
 
 // QueryData handles multiple queries and returns multiple responses.
@@ -109,9 +119,9 @@ func getConnectionString(config *pluginConfig, password string, privateKey strin
 	if len(privateKey) != 0 {
 		params.Add("authenticator", "SNOWFLAKE_JWT")
 		params.Add("privateKey", privateKey)
-		userPass = url.User(config.Username).String()
+		userPass = url.QueryEscape(config.Username)
 	} else {
-		userPass = url.UserPassword(config.Username, password).String()
+		userPass = url.QueryEscape(config.Username) + ":" + url.QueryEscape(password)
 	}
 
 	return fmt.Sprintf("%s@%s?%s&%s", userPass, config.Account, params.Encode(), config.ExtraConfig)
