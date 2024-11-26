@@ -149,7 +149,7 @@ func TestCreateAndValidationConnectionString(t *testing.T) {
 					},
 				},
 			},
-			connectionString: "user:pass@test?database=&role=&schema=&warehouse=&validateDefaultParameters=true",
+			connectionString: "user:pass@test?client_session_keep_alive=true&database=&role=&schema=&warehouse=&validateDefaultParameters=true",
 		},
 		{
 			request: &backend.CheckHealthRequest{
@@ -160,7 +160,7 @@ func TestCreateAndValidationConnectionString(t *testing.T) {
 					},
 				},
 			},
-			connectionString: "user:pass@test?database=&role=&schema=&warehouse=&config=conf&validateDefaultParameters=true",
+			connectionString: "user:pass@test?client_session_keep_alive=true&database=&role=&schema=&warehouse=&config=conf&validateDefaultParameters=true",
 		},
 	}
 	for i, tc := range tcs {

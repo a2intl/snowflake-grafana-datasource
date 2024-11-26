@@ -131,6 +131,7 @@ func getConnectionString(config *pluginConfig, password string, privateKey strin
 	params.Add("warehouse", config.Warehouse)
 	params.Add("database", config.Database)
 	params.Add("schema", config.Schema)
+	params.Add("client_session_keep_alive", "true")
 
 	if config.MaxChunkDownloadWorkers != "" {
 		n0, err := strconv.Atoi(config.MaxChunkDownloadWorkers)

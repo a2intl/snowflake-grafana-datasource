@@ -60,24 +60,34 @@ type queryModel struct {
 func (qc *queryConfigStruct) fetchData(ctx context.Context, td *SnowflakeDatasource, config *pluginConfig, password string, privateKey string) (result DataQueryResult, err error) {
 	connectionString := getConnectionString(config, password, privateKey)
 
-	err = td.OpenDb(connectionString, false)
-	if err != nil {
-		log.DefaultLogger.Error("Could not open database", "err", err)
-		return result, err
-	}
+	var rows *sql.Rows
 
-	log.DefaultLogger.Info("Query", "finalQuery", qc.FinalQuery)
-	rows, err := td.db.QueryContext(ctx, qc.FinalQuery)
-	if err != nil {
-		if strings.Contains(err.Error(), "000605") {
-			log.DefaultLogger.Info("Query got cancelled", "query", qc.FinalQuery, "err", err)
+	for retry := 0; retry <= 1; retry++ {
+		err = td.OpenDb(connectionString, retry > 0)
+		if err != nil {
+			log.DefaultLogger.Error("Could not open database", "err", err)
 			return result, err
 		}
 
-		log.DefaultLogger.Error("Could not execute query", "query", qc.FinalQuery, "err", err)
-		return result, err
+		log.DefaultLogger.Info("Query", "finalQuery", qc.FinalQuery)
+		rows, err = td.db.QueryContext(ctx, qc.FinalQuery)
+		if err != nil {
+			if strings.Contains(err.Error(), "000605") {
+				log.DefaultLogger.Info("Query got cancelled", "query", qc.FinalQuery, "err", err)
+				return result, err
+			}
+
+			if strings.Contains(err.Error(), "390114") {
+				log.DefaultLogger.Info("Authentication token expired", "query", qc.FinalQuery, "err", err)
+				continue
+			}
+
+			log.DefaultLogger.Error("Could not execute query", "query", qc.FinalQuery, "err", err)
+			return result, err
+		}
+		defer rows.Close()
+		break
 	}
-	defer rows.Close()
 
 	columnTypes, err := rows.ColumnTypes()
 	if err != nil {
